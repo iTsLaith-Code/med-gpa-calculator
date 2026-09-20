@@ -106,7 +106,7 @@
         </div>
 
         <div id="override-box" class="hidden p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <input type="number" step="0.01" min="0" max="4.0" id="override-input" onchange="saveOverrideGPA(this.value)" placeholder="e.g. 3.65" class="w-28 px-3 py-1.5 bg-white dark:bg-slate-700 border border-amber-300 dark:border-amber-700 rounded-lg text-sm font-bold text-amber-900 dark:text-amber-100 focus:outline-none">
+          <input type="number" step="0.01" min="0" max="4.0" id="override-input" oninput="saveOverrideGPA(this.value)" placeholder="e.g. 3.65" class="w-28 px-3 py-1.5 bg-white dark:bg-slate-700 border border-amber-300 dark:border-amber-700 rounded-lg text-sm font-bold text-amber-900 dark:text-amber-100 focus:outline-none">
           <span class="text-xs font-bold text-amber-700 dark:text-amber-400">/ 4.00 (Overrides module entries)</span>
         </div>
 
@@ -162,6 +162,7 @@
       </div>
     </div>
 
+    <!-- Trend Chart Moved Here -->
     <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
       <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">GPA Trend</h3>
       <div class="h-64 w-full relative">
@@ -224,27 +225,9 @@
       ]}
     };
 
-    // Changed keys to bypass corrupted cache data entirely
-    const STORAGE_KEY = 'jumed_gpa_data_v12';
-    const PROJ_KEY = 'jumed_gpa_proj_v12';
-
-    let appState;
-    try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      appState = savedData ? JSON.parse(savedData) : null;
-      if (!appState || !appState[6]) {
-        appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      }
-    } catch (e) {
-      appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
-    }
-
-    let projectionMode = false;
-    try {
-      projectionMode = localStorage.getItem(PROJ_KEY) === 'true';
-    } catch (e) {}
-
+    let appState = JSON.parse(localStorage.getItem('med_gpa_data_v10')) || DEFAULT_DATA;
     let currentYear = 1;
+    let projectionMode = false;
     let trendChart = null;
 
     function toggleDarkMode() {
@@ -255,10 +238,6 @@
     }
 
     function downloadPDF() {
-      if (typeof html2pdf === 'undefined') {
-          alert('PDF generation library failed to load. Please check your internet connection or disable adblockers.');
-          return;
-      }
       const element = document.getElementById('pdf-export-section');
       const opt = {
         margin:       0.5,
@@ -276,16 +255,11 @@
     }
 
     function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      localStorage.setItem('med_gpa_data_v10', JSON.stringify(appState));
       render();
     }
 
-    function toggleProjection(enabled) { 
-      projectionMode = enabled; 
-      localStorage.setItem(PROJ_KEY, enabled);
-      render(); 
-    }
-    
+    function toggleProjection(enabled) { projectionMode = enabled; render(); }
     function switchYear(y) { currentYear = y; render(); }
     function updateCourseGrade(idx, val) { appState[currentYear].courses[idx].grade = val; saveState(); }
     function setYearAllGrades(val) { appState[currentYear].courses.forEach(c => c.grade = val); saveState(); }
@@ -296,8 +270,6 @@
 
     function calculateYearStats(year) {
       const yData = appState[year];
-      if (!yData) return { gpa: 0, isGraded: false, gradedHours: 0, totalHrs: 0, emptyHrs: 0 };
-
       if (yData.override !== null) {
         return { gpa: yData.override, isGraded: true, gradedHours: yData.denominator, totalHrs: yData.denominator, emptyHrs: 0 };
       }
@@ -329,7 +301,7 @@
       const c = document.getElementById('year-tabs'); c.innerHTML = '';
       for (let y = 1; y <= 6; y++) {
         const stats = calculateYearStats(y);
-        const isEx = appState[y] ? appState[y].isExcluded : false;
+        const isEx = appState[y].isExcluded;
         const btn = document.createElement('button');
         btn.onclick = () => switchYear(y);
         btn.className = `py-3.5 px-4 font-semibold text-sm transition flex items-center space-x-2 ${currentYear === y ? 'tab-active' : 'text-slate-500 dark:text-slate-400'}`;
@@ -344,8 +316,6 @@
     function renderCurrentYear() {
       const yData = appState[currentYear];
       const stats = calculateYearStats(currentYear);
-      
-      document.getElementById('current-year-title').innerText = `Year ${currentYear}`;
       document.getElementById('current-year-subtitle').innerText = `Weight: ${yData.weight} | Denominator: ${yData.denominator}`;
       document.getElementById('current-year-gpa').innerText = stats.gpa.toFixed(3);
       
@@ -453,11 +423,6 @@
     }
 
     function updateTrendChart(dataPoints) {
-      if (typeof Chart === 'undefined') {
-          console.warn("Chart.js failed to load. Skipping chart render.");
-          return;
-      }
-        
       const ctx = document.getElementById('trendChart').getContext('2d');
       const isDark = document.documentElement.classList.contains('dark');
       const gridColor = isDark ? '#334155' : '#e2e8f0';
@@ -528,7 +493,7 @@
     }
 
     function updateChartOptionsForTheme() {
-      if(trendChart && typeof Chart !== 'undefined') {
+      if(trendChart) {
         const isDark = document.documentElement.classList.contains('dark');
         trendChart.options.scales.y.grid.color = isDark ? '#334155' : '#e2e8f0';
         trendChart.options.scales.y.ticks.color = isDark ? '#94a3b8' : '#64748b';
@@ -541,8 +506,13 @@
       }
     }
 
+    function render() { 
+      renderTabs(); 
+      renderCurrentYear(); 
+      renderSummary(); 
+    }
+    
     // Initialize the app
-    document.getElementById('project-toggle').checked = projectionMode;
     render();
   </script>
 </body>
