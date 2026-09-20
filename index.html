@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <link rel="icon" type="image/jpeg" href="https://iTsLaith-Code.github.io/med-gpa-calculator/favicon.jpeg"> 
   <meta property="og:title" content="JUMed GPA Calculator | Calculate Your Grade Point Average">
@@ -10,114 +10,127 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JUMed GPA Calculator</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 700; }
+    .dark .tab-active { border-bottom: 3px solid #60a5fa; color: #60a5fa; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen flex flex-col transition-colors duration-200">
 
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-lg shadow-md shadow-blue-500/20">MD</div>
         <div>
-          <h1 class="text-lg font-bold text-slate-900 leading-tight">JUMed GPA Calculator</h1>
-          <p class="text-xs text-slate-500">6-Year Weighted Curriculum</p>
+          <h1 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">JUMed GPA Calculator</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">6-Year Weighted Curriculum</p>
         </div>
       </div>
       <div class="flex items-center gap-4">
-        <label class="flex items-center space-x-2 text-xs font-bold text-emerald-700 cursor-pointer bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition">
-          <input type="checkbox" id="project-toggle" onchange="toggleProjection(this.checked)" class="rounded text-emerald-600 focus:ring-0">
+        <button onclick="toggleDarkMode()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">🌓 Theme</button>
+        <label class="flex items-center space-x-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 cursor-pointer bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition">
+          <input type="checkbox" id="project-toggle" onchange="toggleProjection(this.checked)" class="rounded text-emerald-600 focus:ring-0 bg-white dark:bg-slate-700">
           <span>Project empty subjects as A (4.0)</span>
         </label>
-        <button onclick="resetAllGrades()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition">Reset All</button>
+        <button onclick="resetAllGrades()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">Reset All</button>
       </div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+    
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Cumulative GPA</span>
         <div class="flex items-baseline space-x-2 my-1">
-          <span id="stat-cgpa" class="text-3xl font-extrabold text-blue-600">0.000</span>
+          <span id="stat-cgpa" class="text-3xl font-extrabold text-blue-600 dark:text-blue-400">0.000</span>
           <span class="text-sm font-semibold text-slate-400">/ 4.00</span>
         </div>
-        <div class="text-xs text-slate-500">Formula: (Y1×0.15) + (Y2-Y6×0.17)</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">Formula: (Y1×0.15) + (Y2-Y6×0.17)</div>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Estimated Percentage</span>
-        <div class="my-1"><span id="stat-percentage" class="text-3xl font-extrabold text-emerald-600">0.0%</span></div>
-        <div id="stat-standing" class="text-xs font-semibold text-slate-500">Awaiting grades...</div>
+        <div class="my-1"><span id="stat-percentage" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">0.0%</span></div>
+        <div id="stat-standing" class="text-xs font-semibold text-slate-500 dark:text-slate-400">Awaiting grades...</div>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Completed Credits</span>
         <div class="flex items-baseline space-x-2 my-1">
-          <span id="stat-credits" class="text-3xl font-extrabold text-slate-800">0</span>
+          <span id="stat-credits" class="text-3xl font-extrabold text-slate-800 dark:text-white">0</span>
         </div>
-        <div class="text-xs text-slate-500">Graded hours only</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">Graded hours only</div>
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="flex overflow-x-auto border-b border-slate-200 px-4 bg-slate-50/70" id="year-tabs"></div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div class="flex overflow-x-auto border-b border-slate-200 dark:border-slate-700 px-4 bg-slate-50/70 dark:bg-slate-800/70" id="year-tabs"></div>
 
       <div class="p-5 md:p-6 space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-700">
           <div>
-            <h2 id="current-year-title" class="text-xl font-bold text-slate-900">Year 1</h2>
-            <p id="current-year-subtitle" class="text-xs text-slate-500"></p>
+            <h2 id="current-year-title" class="text-xl font-bold text-slate-900 dark:text-white">Year 1</h2>
+            <p id="current-year-subtitle" class="text-xs text-slate-500 dark:text-slate-400"></p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="setYearAllGrades('4.0')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 font-medium text-slate-700">Set All A</button>
-            <button onclick="setYearAllGrades('')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 font-medium text-slate-500">Clear Year</button>
+            <button onclick="setYearAllGrades('4.0')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium text-slate-700 dark:text-slate-300">Set All A</button>
+            <button onclick="setYearAllGrades('')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium text-slate-500 dark:text-slate-400">Clear Year</button>
             
-            <div class="h-4 w-px bg-slate-200 mx-1"></div>
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-600 mx-1"></div>
 
-            <label class="flex items-center space-x-2 text-xs font-semibold text-slate-600 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-lg">
-              <input type="checkbox" id="override-toggle" onchange="toggleOverride(this.checked)" class="rounded text-blue-600 focus:ring-0">
+            <label class="flex items-center space-x-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-lg">
+              <input type="checkbox" id="override-toggle" onchange="toggleOverride(this.checked)" class="rounded text-blue-600 focus:ring-0 bg-white dark:bg-slate-600">
               <span>Direct Override</span>
             </label>
 
-            <label id="exclude-container" class="hidden flex items-center space-x-2 text-xs font-semibold text-slate-600 cursor-pointer bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
-              <input type="checkbox" id="exclude-toggle" onchange="toggleExclude(this.checked)" class="rounded text-red-600 focus:ring-0">
-              <span class="text-red-700">Exclude from Equation</span>
+            <label id="exclude-container" class="hidden flex items-center space-x-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer bg-red-50 dark:bg-red-900/30 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-900/50">
+              <input type="checkbox" id="exclude-toggle" onchange="toggleExclude(this.checked)" class="rounded text-red-600 focus:ring-0 bg-white dark:bg-slate-600">
+              <span class="text-red-700 dark:text-red-400">Exclude from Equation</span>
             </label>
           </div>
         </div>
 
-        <div id="override-box" class="hidden p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <input type="number" step="0.01" min="0" max="4.0" id="override-input" oninput="saveOverrideGPA(this.value)" placeholder="e.g. 3.65" class="w-28 px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-sm font-bold text-amber-900 focus:outline-none">
-          <span class="text-xs font-bold text-amber-700">/ 4.00 (Overrides module entries)</span>
+        <div id="override-box" class="hidden p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <input type="number" step="0.01" min="0" max="4.0" id="override-input" oninput="saveOverrideGPA(this.value)" placeholder="e.g. 3.65" class="w-28 px-3 py-1.5 bg-white dark:bg-slate-700 border border-amber-300 dark:border-amber-700 rounded-lg text-sm font-bold text-amber-900 dark:text-amber-100 focus:outline-none">
+          <span class="text-xs font-bold text-amber-700 dark:text-amber-400">/ 4.00 (Overrides module entries)</span>
         </div>
 
         <div id="course-container" class="overflow-x-auto">
           <table class="w-full text-left text-sm border-collapse">
             <thead>
-              <tr class="text-xs uppercase tracking-wider text-slate-400 border-b border-slate-200">
+              <tr class="text-xs uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-700">
                 <th class="py-3 px-3">Subject Name</th>
                 <th class="py-3 px-3 text-center">Credit Hours</th>
                 <th class="py-3 px-3 text-center">Letter Grade</th>
                 <th class="py-3 px-3 text-right">Points</th>
               </tr>
             </thead>
-            <tbody id="course-rows" class="divide-y divide-slate-100"></tbody>
+            <tbody id="course-rows" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
           </table>
         </div>
 
-        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div class="flex items-center space-x-6 text-sm font-semibold">
             <div>
               <span class="text-slate-400 block text-xs">Current Year GPA</span>
-              <span id="current-year-gpa" class="text-slate-800 text-lg font-bold">0.00</span>
+              <span id="current-year-gpa" class="text-slate-800 dark:text-white text-lg font-bold">0.00</span>
             </div>
-            <div id="projection-badge" class="hidden bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-md font-bold">
+            <div id="projection-badge" class="hidden bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-1 rounded-md font-bold">
               Projecting remaining hours as 4.0
             </div>
           </div>
@@ -125,12 +138,18 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-6">
-      <h3 class="text-base font-bold text-slate-900 mb-3">6-Year Breakdown</h3>
+    <div id="pdf-export-section" class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 md:p-6">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">6-Year Breakdown</h3>
+        <button onclick="downloadPDF()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          Download Transcript
+        </button>
+      </div>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left">
           <thead>
-            <tr class="border-b border-slate-200 text-slate-400 uppercase tracking-wider">
+            <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-400 uppercase tracking-wider">
               <th class="py-2.5 px-3">Year</th>
               <th class="py-2.5 px-3">Weight</th>
               <th class="py-2.5 px-3">Status</th>
@@ -138,8 +157,16 @@
               <th class="py-2.5 px-3 text-right">Equation Value</th>
             </tr>
           </thead>
-          <tbody id="summary-table-body" class="divide-y divide-slate-100 font-medium"></tbody>
+          <tbody id="summary-table-body" class="divide-y divide-slate-100 dark:divide-slate-700 font-medium"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Trend Chart Moved Here -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">GPA Trend</h3>
+      <div class="h-64 w-full relative">
+        <canvas id="trendChart"></canvas>
       </div>
     </div>
   </main>
@@ -201,6 +228,31 @@
     let appState = JSON.parse(localStorage.getItem('med_gpa_data_v10')) || DEFAULT_DATA;
     let currentYear = 1;
     let projectionMode = false;
+    let trendChart = null;
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      if(trendChart) {
+        updateChartOptionsForTheme();
+      }
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById('pdf-export-section');
+      const opt = {
+        margin:       0.5,
+        filename:     'JUMed_Transcript.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      
+      const btn = element.querySelector('button');
+      btn.style.display = 'none'; 
+      html2pdf().set(opt).from(element).save().then(() => {
+        btn.style.display = 'flex'; 
+      });
+    }
 
     function saveState() {
       localStorage.setItem('med_gpa_data_v10', JSON.stringify(appState));
@@ -252,10 +304,10 @@
         const isEx = appState[y].isExcluded;
         const btn = document.createElement('button');
         btn.onclick = () => switchYear(y);
-        btn.className = `py-3.5 px-4 font-semibold text-sm transition flex items-center space-x-2 ${currentYear === y ? 'tab-active' : 'text-slate-500'}`;
+        btn.className = `py-3.5 px-4 font-semibold text-sm transition flex items-center space-x-2 ${currentYear === y ? 'tab-active' : 'text-slate-500 dark:text-slate-400'}`;
         
-        let badge = isEx ? `<span class="bg-red-100 text-red-700 text-[10px] px-1.5 rounded-full">Excluded</span>` : 
-                (stats.isGraded ? `<span class="bg-blue-100 text-blue-700 text-[10px] px-1.5 rounded-full">${stats.gpa.toFixed(2)}</span>` : '');
+        let badge = isEx ? `<span class="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400 text-[10px] px-1.5 rounded-full">Excluded</span>` : 
+                (stats.isGraded ? `<span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] px-1.5 rounded-full">${stats.gpa.toFixed(2)}</span>` : '');
         btn.innerHTML = `<span>Year ${y}</span>${badge}`;
         c.appendChild(btn);
       }
@@ -294,7 +346,7 @@
         
         if (c.grade !== "") {
           pts = (parseFloat(c.grade) * c.hours).toFixed(2);
-          rowClass = 'text-blue-600';
+          rowClass = 'text-blue-600 dark:text-blue-400';
         } else if (projectionMode) {
           pts = (4.0 * c.hours).toFixed(2);
           rowClass = 'text-emerald-500 font-bold';
@@ -302,10 +354,10 @@
 
         const opts = GRADE_SCALE.map(o => `<option value="${o.val}" ${c.grade === o.val ? 'selected' : ''}>${o.label}</option>`).join('');
         tbody.innerHTML += `
-          <tr class="hover:bg-slate-50">
-            <td class="py-3 px-3 font-medium text-slate-900">${c.name}</td>
-            <td class="py-3 px-3 text-center"><span class="bg-slate-100 rounded px-2 py-1 text-slate-700 font-semibold">${c.hours}</span></td>
-            <td class="py-3 px-3 text-center"><select onchange="updateCourseGrade(${idx}, this.value)" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500">${opts}</select></td>
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td class="py-3 px-3 font-medium text-slate-900 dark:text-slate-200">${c.name}</td>
+            <td class="py-3 px-3 text-center"><span class="bg-slate-100 dark:bg-slate-700 rounded px-2 py-1 text-slate-700 dark:text-slate-300 font-semibold">${c.hours}</span></td>
+            <td class="py-3 px-3 text-center"><select onchange="updateCourseGrade(${idx}, this.value)" class="bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500 dark:text-slate-200">${opts}</select></td>
             <td class="py-3 px-3 text-right font-mono font-semibold ${rowClass}">${pts}</td>
           </tr>`;
       });
@@ -314,6 +366,7 @@
     function renderSummary() {
       let cumulativeGPA = 0;
       let totalCompletedCredits = 0;
+      let chartData = [];
       const tbody = document.getElementById('summary-table-body'); tbody.innerHTML = '';
 
       for (let y = 1; y <= 6; y++) {
@@ -324,22 +377,23 @@
         let statusText = "<span class='text-slate-400'>Empty (Assumes 4.0)</span>";
 
         if (yData.isExcluded) {
-          statusText = '<span class="text-red-500">Excluded (Assumes 4.0)</span>';
+          statusText = '<span class="text-red-500 dark:text-red-400">Excluded (Assumes 4.0)</span>';
         } else if (stats.isGraded) {
           effectiveYearGPA = stats.gpa;
           totalCompletedCredits += stats.isOverride ? yData.denominator : stats.gradedHours;
-          statusText = (projectionMode && stats.emptyHrs > 0 && !yData.override) ? '<span class="text-emerald-600">Projected</span>' : '<span class="text-blue-600">Active</span>';
+          statusText = (projectionMode && stats.emptyHrs > 0 && !yData.override) ? '<span class="text-emerald-600 dark:text-emerald-400">Projected</span>' : '<span class="text-blue-600 dark:text-blue-400">Active</span>';
         }
 
         cumulativeGPA += (effectiveYearGPA * yData.weight);
+        chartData.push(effectiveYearGPA);
 
         tbody.innerHTML += `
-          <tr class="${currentYear === y ? 'bg-blue-50/50' : ''}">
-            <td class="py-2.5 px-3 font-bold text-slate-800">Year ${y}</td>
-            <td class="py-2.5 px-3 font-mono">${yData.weight}</td>
+          <tr class="${currentYear === y ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}">
+            <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">Year ${y}</td>
+            <td class="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-400">${yData.weight}</td>
             <td class="py-2.5 px-3 font-semibold">${statusText}</td>
-            <td class="py-2.5 px-3 font-bold text-slate-800">${effectiveYearGPA.toFixed(3)}</td>
-            <td class="py-2.5 px-3 text-right font-mono font-bold text-blue-600">+${(effectiveYearGPA * yData.weight).toFixed(4)}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">${effectiveYearGPA.toFixed(3)}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">+${(effectiveYearGPA * yData.weight).toFixed(4)}</td>
           </tr>`;
       }
 
@@ -350,19 +404,105 @@
       const standing = document.getElementById('stat-standing');
       if (cumulativeGPA >= 3.65) { 
         standing.innerText = 'Excellent'; 
-        standing.className = 'text-xs font-semibold text-emerald-600'; 
+        standing.className = 'text-xs font-semibold text-emerald-600 dark:text-emerald-400'; 
       }
       else if (cumulativeGPA >= 3.0) { 
         standing.innerText = 'Very Good'; 
-        standing.className = 'text-xs font-semibold text-blue-600'; 
+        standing.className = 'text-xs font-semibold text-blue-600 dark:text-blue-400'; 
       }
       else if (cumulativeGPA >= 2.5) { 
         standing.innerText = 'Good'; 
-        standing.className = 'text-xs font-semibold text-amber-600'; 
+        standing.className = 'text-xs font-semibold text-amber-600 dark:text-amber-400'; 
       }
       else { 
         standing.innerText = 'Satisfactory'; 
-        standing.className = 'text-xs font-semibold text-slate-500'; 
+        standing.className = 'text-xs font-semibold text-slate-500 dark:text-slate-400'; 
+      }
+
+      updateTrendChart(chartData);
+    }
+
+    function updateTrendChart(dataPoints) {
+      const ctx = document.getElementById('trendChart').getContext('2d');
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? '#334155' : '#e2e8f0';
+      const textColor = isDark ? '#94a3b8' : '#64748b';
+
+      if (trendChart) {
+        trendChart.destroy();
+      }
+
+      trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6'],
+          datasets: [{
+            label: 'Yearly GPA',
+            data: dataPoints,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#2563eb',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          layout: {
+            padding: {
+              top: 15
+            }
+          },
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { 
+            y: { 
+              min: 0, 
+              max: 4.0,
+              grid: { color: gridColor },
+              ticks: { color: textColor }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: textColor }
+            }
+          },
+          plugins: { 
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: isDark ? '#1e293b' : '#fff',
+              titleColor: isDark ? '#f8fafc' : '#0f172a',
+              bodyColor: isDark ? '#cbd5e1' : '#334155',
+              borderColor: isDark ? '#334155' : '#e2e8f0',
+              borderWidth: 1,
+              padding: 10,
+              displayColors: false,
+              callbacks: {
+                label: function(context) {
+                  return 'GPA: ' + context.parsed.y.toFixed(3);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChartOptionsForTheme() {
+      if(trendChart) {
+        const isDark = document.documentElement.classList.contains('dark');
+        trendChart.options.scales.y.grid.color = isDark ? '#334155' : '#e2e8f0';
+        trendChart.options.scales.y.ticks.color = isDark ? '#94a3b8' : '#64748b';
+        trendChart.options.scales.x.ticks.color = isDark ? '#94a3b8' : '#64748b';
+        trendChart.options.plugins.tooltip.backgroundColor = isDark ? '#1e293b' : '#fff';
+        trendChart.options.plugins.tooltip.titleColor = isDark ? '#f8fafc' : '#0f172a';
+        trendChart.options.plugins.tooltip.bodyColor = isDark ? '#cbd5e1' : '#334155';
+        trendChart.options.plugins.tooltip.borderColor = isDark ? '#334155' : '#e2e8f0';
+        trendChart.update();
       }
     }
 
