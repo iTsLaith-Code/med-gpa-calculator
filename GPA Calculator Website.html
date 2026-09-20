@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medical School GPA Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 700; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-lg shadow-md shadow-blue-500/20">MD</div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">MedSchool GPA Calculator</h1>
+          <p class="text-xs text-slate-500">6-Year Weighted Curriculum</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <label class="flex items-center space-x-2 text-xs font-bold text-emerald-700 cursor-pointer bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition">
+          <input type="checkbox" id="project-toggle" onchange="toggleProjection(this.checked)" class="rounded text-emerald-600 focus:ring-0">
+          <span>Project empty subjects as A (4.0)</span>
+        </label>
+        <button onclick="resetAllGrades()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition">Reset All</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Cumulative GPA</span>
+        <div class="flex items-baseline space-x-2 my-1">
+          <span id="stat-cgpa" class="text-3xl font-extrabold text-blue-600">0.000</span>
+          <span class="text-sm font-semibold text-slate-400">/ 4.00</span>
+        </div>
+        <div class="text-xs text-slate-500">Formula: (Y1×0.15) + (Y2-Y6×0.17)</div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Estimated Percentage</span>
+        <div class="my-1"><span id="stat-percentage" class="text-3xl font-extrabold text-emerald-600">0.0%</span></div>
+        <div id="stat-standing" class="text-xs font-semibold text-slate-500">Awaiting grades...</div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Completed Credits</span>
+        <div class="flex items-baseline space-x-2 my-1">
+          <span id="stat-credits" class="text-3xl font-extrabold text-slate-800">0</span>
+        </div>
+        <div class="text-xs text-slate-500">Graded hours only</div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="flex overflow-x-auto border-b border-slate-200 px-4 bg-slate-50/70" id="year-tabs"></div>
+
+      <div class="p-5 md:p-6 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <h2 id="current-year-title" class="text-xl font-bold text-slate-900">Year 1</h2>
+            <p id="current-year-subtitle" class="text-xs text-slate-500"></p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="setYearAllGrades('4.0')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 font-medium text-slate-700">Set All A</button>
+            <button onclick="setYearAllGrades('')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 font-medium text-slate-500">Clear Year</button>
+            
+            <div class="h-4 w-px bg-slate-200 mx-1"></div>
+
+            <label class="flex items-center space-x-2 text-xs font-semibold text-slate-600 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-lg">
+              <input type="checkbox" id="override-toggle" onchange="toggleOverride(this.checked)" class="rounded text-blue-600 focus:ring-0">
+              <span>Direct Override</span>
+            </label>
+
+            <label id="exclude-container" class="hidden flex items-center space-x-2 text-xs font-semibold text-slate-600 cursor-pointer bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
+              <input type="checkbox" id="exclude-toggle" onchange="toggleExclude(this.checked)" class="rounded text-red-600 focus:ring-0">
+              <span class="text-red-700">Exclude from Equation</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="override-box" class="hidden p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <input type="number" step="0.01" min="0" max="4.0" id="override-input" oninput="saveOverrideGPA(this.value)" placeholder="e.g. 3.65" class="w-28 px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-sm font-bold text-amber-900 focus:outline-none">
+          <span class="text-xs font-bold text-amber-700">/ 4.00 (Overrides module entries)</span>
+        </div>
+
+        <div id="course-container" class="overflow-x-auto">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="text-xs uppercase tracking-wider text-slate-400 border-b border-slate-200">
+                <th class="py-3 px-3">Subject Name</th>
+                <th class="py-3 px-3 text-center">Credit Hours</th>
+                <th class="py-3 px-3 text-center">Letter Grade</th>
+                <th class="py-3 px-3 text-right">Points</th>
+              </tr>
+            </thead>
+            <tbody id="course-rows" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div class="flex items-center space-x-6 text-sm font-semibold">
+            <div>
+              <span class="text-slate-400 block text-xs">Current Year GPA</span>
+              <span id="current-year-gpa" class="text-slate-800 text-lg font-bold">0.00</span>
+            </div>
+            <div id="projection-badge" class="hidden bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-md font-bold">
+              Projecting remaining hours as 4.0
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-6">
+      <h3 class="text-base font-bold text-slate-900 mb-3">6-Year Breakdown</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-400 uppercase tracking-wider">
+              <th class="py-2.5 px-3">Year</th>
+              <th class="py-2.5 px-3">Weight</th>
+              <th class="py-2.5 px-3">Status</th>
+              <th class="py-2.5 px-3">Year GPA</th>
+              <th class="py-2.5 px-3 text-right">Equation Value</th>
+            </tr>
+          </thead>
+          <tbody id="summary-table-body" class="divide-y divide-slate-100 font-medium"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const GRADE_SCALE = [
+      { label: 'Select', val: '' }, { label: 'A (4.00)', val: '4.0' }, { label: 'A- (3.75)', val: '3.75' },
+      { label: 'B+ (3.50)', val: '3.5' }, { label: 'B (3.00)', val: '3.0' }, { label: 'B- (2.75)', val: '2.75' },
+      { label: 'C+ (2.50)', val: '2.5' }, { label: 'C (2.00)', val: '2.0' }, { label: 'C- (1.75)', val: '1.75' },
+      { label: 'D+ (1.50)', val: '1.5' }, { label: 'D (1.00)', val: '1.0' }, { label: 'D- (0.75)', val: '0.75' },
+      { label: 'F (0.00)', val: '0.0' }
+    ];
+
+    const DEFAULT_DATA = {
+      1: { weight: 0.15, denominator: 55, override: null, isExcluded: false, courses: [
+          { name: "General Biology 1", hours: 3, grade: "" }, { name: "General Chemistry 1", hours: 3, grade: "" },
+          { name: "General Physics", hours: 3, grade: "" }, { name: "Computer Skills", hours: 3, grade: "" },
+          { name: "Principles of Statistics", hours: 3, grade: "" }, { name: "Intro to Anatomy & Embryology", hours: 3, grade: "" },
+          { name: "General Histology", hours: 2, grade: "" }, { name: "Intro to Physiology", hours: 2, grade: "" }, 
+          { name: "Organic Chemistry", hours: 3, grade: "" }, { name: "Intro to Biochem & Mol Biology", hours: 3, grade: "" },
+          { name: "University Elective", hours: 3, grade: "" }, { name: "University Elective", hours: 3, grade: "" },
+          { name: "University Elective", hours: 3, grade: "" }, { name: "University Elective", hours: 3, grade: "" },
+          { name: "University Elective", hours: 3, grade: "" }, { name: "University Elective", hours: 3, grade: "" },
+          { name: "University Elective", hours: 3, grade: "" }, { name: "University Elective", hours: 3, grade: "" },
+          { name: "University Elective", hours: 3, grade: "" }
+      ]},
+      2: { weight: 0.17, denominator: 38, override: null, isExcluded: true, courses: [
+          { name: "Metabolism", hours: 3, grade: "" }, { name: "Intro to Microbiology", hours: 3, grade: "" },
+          { name: "Cell & Molecular Biology", hours: 3, grade: "" }, { name: "Intro to Pharmacology", hours: 2, grade: "" },
+          { name: "Intro to Pathology", hours: 2, grade: "" }, { name: "Community Medicine", hours: 4, grade: "" },
+          { name: "MSK & Skin", hours: 6, grade: "" }, { name: "Gastrointestinal System", hours: 6, grade: "" },
+          { name: "Global Health", hours: 3, grade: "" }, { name: "Endocrine System", hours: 3, grade: "" }, 
+          { name: "Social Psychology", hours: 2, grade: "" }, { name: "Medical Ethics", hours: 1, grade: "" }
+      ]},
+      3: { weight: 0.17, denominator: 34, override: null, isExcluded: true, courses: [
+          { name: "Cardiovascular System", hours: 5, grade: "" }, { name: "Respiratory System", hours: 4, grade: "" },
+          { name: "Lymphatic & Hematopoietic System", hours: 4, grade: "" }, { name: "Medical Immunology", hours: 2, grade: "" },
+          { name: "CNS & Behavioral Science", hours: 7, grade: "" }, { name: "Urogenital / Renal & Repro", hours: 6, grade: "" },
+          { name: "Medical Genetics", hours: 2, grade: "" }, { name: "Medical Scientific Research", hours: 4, grade: "" }
+      ]},
+      4: { weight: 0.17, denominator: 40, override: null, isExcluded: true, courses: [
+          { name: "Intro to Clinical Medicine", hours: 8, grade: "" }, { name: "Internal Medicine 1", hours: 12, grade: "" },
+          { name: "General Surgery 1", hours: 12, grade: "" }, { name: "Clinical Neurosciences", hours: 4, grade: "" },
+          { name: "Anesthesia & Intensive Care", hours: 4, grade: "" }
+      ]},
+      5: { weight: 0.17, denominator: 47, override: null, isExcluded: true, courses: [
+          { name: "Pediatrics 1", hours: 4, grade: "" }, { name: "OBGYN 1", hours: 8, grade: "" },
+          { name: "Psychiatry", hours: 4, grade: "" }, { name: "Special Surgery", hours: 12, grade: "" },
+          { name: "Selected Medical Specialties", hours: 12, grade: "" }, { name: "Therapeutics", hours: 3, grade: "" },
+          { name: "Graduation Project 1", hours: 1, grade: "" }, { name: "Health Economics", hours: 3, grade: "" }
+      ]},
+      6: { weight: 0.17, denominator: 42, override: null, isExcluded: true, courses: [
+          { name: "Elective Clinical Training", hours: 8, grade: "" }, { name: "Internal Medicine 2", hours: 8, grade: "" },
+          { name: "General Surgery 2", hours: 8, grade: "" }, { name: "Pediatrics 2", hours: 8, grade: "" },
+          { name: "OBGYN 2", hours: 8, grade: "" }, { name: "Graduation Project 2", hours: 2, grade: "" }
+      ]}
+    };
+
+    let appState = JSON.parse(localStorage.getItem('med_gpa_data_v10')) || DEFAULT_DATA;
+    let currentYear = 1;
+    let projectionMode = false;
+
+    function saveState() {
+      localStorage.setItem('med_gpa_data_v10', JSON.stringify(appState));
+      render();
+    }
+
+    function toggleProjection(enabled) { projectionMode = enabled; render(); }
+    function switchYear(y) { currentYear = y; render(); }
+    function updateCourseGrade(idx, val) { appState[currentYear].courses[idx].grade = val; saveState(); }
+    function setYearAllGrades(val) { appState[currentYear].courses.forEach(c => c.grade = val); saveState(); }
+    function toggleOverride(enabled) { appState[currentYear].override = enabled ? 0 : null; saveState(); }
+    function saveOverrideGPA(val) { const gpa = parseFloat(val); appState[currentYear].override = isNaN(gpa) ? 0 : Math.min(4.0, Math.max(0, gpa)); saveState(); }
+    function toggleExclude(enabled) { appState[currentYear].isExcluded = enabled; saveState(); }
+    function resetAllGrades() { appState = JSON.parse(JSON.stringify(DEFAULT_DATA)); saveState(); }
+
+    function calculateYearStats(year) {
+      const yData = appState[year];
+      if (yData.override !== null) {
+        return { gpa: yData.override, isGraded: true, gradedHours: yData.denominator, totalHrs: yData.denominator, emptyHrs: 0 };
+      }
+      
+      let pts = 0, hrs = 0, emptyHrs = 0;
+      yData.courses.forEach(c => {
+        if (c.grade !== "") { 
+          pts += parseFloat(c.grade) * c.hours; 
+          hrs += c.hours; 
+        } else {
+          emptyHrs += c.hours;
+        }
+      });
+
+      if (projectionMode && emptyHrs > 0) {
+        pts += (emptyHrs * 4.0);
+        hrs += emptyHrs;
+      }
+
+      return { 
+        gpa: hrs > 0 ? (pts / hrs) : 0, 
+        isGraded: hrs > 0, 
+        gradedHours: hrs, 
+        emptyHrs: emptyHrs 
+      };
+    }
+
+    function renderTabs() {
+      const c = document.getElementById('year-tabs'); c.innerHTML = '';
+      for (let y = 1; y <= 6; y++) {
+        const stats = calculateYearStats(y);
+        const isEx = appState[y].isExcluded;
+        const btn = document.createElement('button');
+        btn.onclick = () => switchYear(y);
+        btn.className = `py-3.5 px-4 font-semibold text-sm transition flex items-center space-x-2 ${currentYear === y ? 'tab-active' : 'text-slate-500'}`;
+        
+        let badge = isEx ? `<span class="bg-red-100 text-red-700 text-[10px] px-1.5 rounded-full">Excluded</span>` : 
+                (stats.isGraded ? `<span class="bg-blue-100 text-blue-700 text-[10px] px-1.5 rounded-full">${stats.gpa.toFixed(2)}</span>` : '');
+        btn.innerHTML = `<span>Year ${y}</span>${badge}`;
+        c.appendChild(btn);
+      }
+    }
+
+    function renderCurrentYear() {
+      const yData = appState[currentYear];
+      const stats = calculateYearStats(currentYear);
+      document.getElementById('current-year-subtitle').innerText = `Weight: ${yData.weight} | Denominator: ${yData.denominator}`;
+      document.getElementById('current-year-gpa').innerText = stats.gpa.toFixed(3);
+      
+      const badge = document.getElementById('projection-badge');
+      if (badge) {
+        badge.classList.toggle('hidden', !(projectionMode && stats.emptyHrs > 0 && !yData.override));
+      }
+
+      const isOverride = yData.override !== null;
+      document.getElementById('override-toggle').checked = isOverride;
+      document.getElementById('override-box').classList.toggle('hidden', !isOverride);
+      document.getElementById('course-container').classList.toggle('opacity-40', isOverride || yData.isExcluded);
+      document.getElementById('course-container').classList.toggle('pointer-events-none', isOverride || yData.isExcluded);
+      if (isOverride) document.getElementById('override-input').value = yData.override || '';
+
+      const exContainer = document.getElementById('exclude-container');
+      if (currentYear > 1) {
+        exContainer.classList.remove('hidden');
+        document.getElementById('exclude-toggle').checked = yData.isExcluded;
+      } else {
+        exContainer.classList.add('hidden');
+      }
+
+      const tbody = document.getElementById('course-rows'); tbody.innerHTML = '';
+      yData.courses.forEach((c, idx) => {
+        let pts = '-';
+        let rowClass = 'text-slate-400';
+        
+        if (c.grade !== "") {
+          pts = (parseFloat(c.grade) * c.hours).toFixed(2);
+          rowClass = 'text-blue-600';
+        } else if (projectionMode) {
+          pts = (4.0 * c.hours).toFixed(2);
+          rowClass = 'text-emerald-500 font-bold';
+        }
+
+        const opts = GRADE_SCALE.map(o => `<option value="${o.val}" ${c.grade === o.val ? 'selected' : ''}>${o.label}</option>`).join('');
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-3 font-medium text-slate-900">${c.name}</td>
+            <td class="py-3 px-3 text-center"><span class="bg-slate-100 rounded px-2 py-1 text-slate-700 font-semibold">${c.hours}</span></td>
+            <td class="py-3 px-3 text-center"><select onchange="updateCourseGrade(${idx}, this.value)" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500">${opts}</select></td>
+            <td class="py-3 px-3 text-right font-mono font-semibold ${rowClass}">${pts}</td>
+          </tr>`;
+      });
+    }
+
+    function renderSummary() {
+      let cumulativeGPA = 0;
+      let totalCompletedCredits = 0;
+      const tbody = document.getElementById('summary-table-body'); tbody.innerHTML = '';
+
+      for (let y = 1; y <= 6; y++) {
+        const yData = appState[y];
+        const stats = calculateYearStats(y);
+        
+        let effectiveYearGPA = 4.0;
+        let statusText = "<span class='text-slate-400'>Empty (Assumes 4.0)</span>";
+
+        if (yData.isExcluded) {
+          statusText = '<span class="text-red-500">Excluded (Assumes 4.0)</span>';
+        } else if (stats.isGraded) {
+          effectiveYearGPA = stats.gpa;
+          totalCompletedCredits += stats.isOverride ? yData.denominator : stats.gradedHours;
+          statusText = (projectionMode && stats.emptyHrs > 0 && !yData.override) ? '<span class="text-emerald-600">Projected</span>' : '<span class="text-blue-600">Active</span>';
+        }
+
+        cumulativeGPA += (effectiveYearGPA * yData.weight);
+
+        tbody.innerHTML += `
+          <tr class="${currentYear === y ? 'bg-blue-50/50' : ''}">
+            <td class="py-2.5 px-3 font-bold text-slate-800">Year ${y}</td>
+            <td class="py-2.5 px-3 font-mono">${yData.weight}</td>
+            <td class="py-2.5 px-3 font-semibold">${statusText}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-800">${effectiveYearGPA.toFixed(3)}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-blue-600">+${(effectiveYearGPA * yData.weight).toFixed(4)}</td>
+          </tr>`;
+      }
+
+      document.getElementById('stat-cgpa').innerText = cumulativeGPA.toFixed(3);
+      document.getElementById('stat-credits').innerText = totalCompletedCredits;
+      document.getElementById('stat-percentage').innerText = `${(cumulativeGPA * 25).toFixed(1)}%`;
+      
+      const standing = document.getElementById('stat-standing');
+      if (cumulativeGPA >= 3.65) { 
+        standing.innerText = 'Excellent'; 
+        standing.className = 'text-xs font-semibold text-emerald-600'; 
+      }
+      else if (cumulativeGPA >= 3.0) { 
+        standing.innerText = 'Very Good'; 
+        standing.className = 'text-xs font-semibold text-blue-600'; 
+      }
+      else if (cumulativeGPA >= 2.5) { 
+        standing.innerText = 'Good'; 
+        standing.className = 'text-xs font-semibold text-amber-600'; 
+      }
+      else { 
+        standing.innerText = 'Satisfactory'; 
+        standing.className = 'text-xs font-semibold text-slate-500'; 
+      }
+    }
+
+    function render() { 
+      renderTabs(); 
+      renderCurrentYear(); 
+      renderSummary(); 
+    }
+    
+    // Initialize the app
+    render();
+  </script>
+</body>
+</html>
